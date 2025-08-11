@@ -134,3 +134,18 @@ test "Decode" {
 
     try std.testing.expectEqualSlices(u8, "aaaaabb", decoded.items);
 }
+
+test "Decode Larger" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const alloc = gpa.allocator();
+    var decoded = std.ArrayList(u8).init(alloc);
+    defer decoded.deinit();
+
+    const encoded = &[_]u8{ 'a', 255, 'a', 2 };
+
+    try runLengthDecode(encoded, &decoded);
+
+    try std.testing.expectEqualSlices(u8, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", decoded.items);
+}
