@@ -9,6 +9,32 @@ pub fn EncodePair(comptime T: type) type {
     };
 }
 
+pub fn rleToBytes(encode: []const EncodePair(u8), target: *std.ArrayList(u8)) !void {
+    for (encode) |pair| {
+        try target.append(pair.val);
+        try target.append(pair.times);
+    }
+}
+
+pub fn bytesToRle(bytes: []const u8, to: *std.ArrayList(EncodePair(u8))) !void {
+    for (bytes, 0..) |val, i| {
+        if (val % 2 == 0) {
+            try to.append(.{
+                .val = val,
+                .times = bytes[i + 1],
+            });
+        }
+    }
+}
+
+pub fn runLengthDecode(encode: []const EncodePair(u8), target: *std.ArrayList(u8)) !void {
+    for (encode) |pair| {
+        for (pair.times) |_| {
+            try target.append(pair.val);
+        }
+    }
+}
+
 pub fn runLengthEncode(comptime T: type, msg: []const T, encode_to: *std.ArrayList(EncodePair(T))) !void {
     if (msg.len == 0) {
         return;
