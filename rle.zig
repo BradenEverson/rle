@@ -18,7 +18,7 @@ pub fn rleToBytes(encode: []const EncodePair(u8), target: *std.ArrayList(u8)) !v
 
 pub fn bytesToRle(bytes: []const u8, to: *std.ArrayList(EncodePair(u8))) !void {
     for (bytes, 0..) |val, i| {
-        if (val % 2 == 0) {
+        if (i % 2 == 0) {
             try to.append(.{
                 .val = val,
                 .times = bytes[i + 1],
@@ -29,7 +29,7 @@ pub fn bytesToRle(bytes: []const u8, to: *std.ArrayList(EncodePair(u8))) !void {
 
 pub fn runLengthDecode(encode: []const EncodePair(u8), target: *std.ArrayList(u8)) !void {
     for (encode) |pair| {
-        for (pair.times) |_| {
+        for (0..pair.times) |_| {
             try target.append(pair.val);
         }
     }
@@ -108,4 +108,22 @@ test "Max u8 size" {
         .{ .val = 'a', .times = 255 },
         .{ .val = 'a', .times = 1 },
     }, encode_to.items);
+}
+
+test "Decode" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const alloc = gpa.allocator();
+    var decoded = std.ArrayList(u8).init(alloc);
+    defer decoded.deinit();
+    var decoded_rle = std.ArrayList(EncodePair(u8)).init(alloc);
+    defer decoded_rle.deinit();
+
+    const encoded = &[_]u8{ 'a', 5, 'b', 2 };
+
+    try bytesToRle(encoded, &decoded_rle);
+    try runLengthDecode(decoded_rle.items, &decoded);
+
+    try std.testing.expectEqualSlices(u8, "aaaaabb", decoded.items);
 }
