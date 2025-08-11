@@ -1,1 +1,6 @@
-Run Length Encoding Implementation :)
+Run Length Encoding Implementation supporting a bunch of different Encoding/Decoding pairs:
+
+- Raw Bytes to Encoding Pair (byte, count)
+- Encoding Pair to encoded bytes
+- Encoding pair to raw bytes
+- Encoded bytes to raw bytes 
