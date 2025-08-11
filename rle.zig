@@ -5,7 +5,7 @@ const std = @import("std");
 pub fn EncodePair(comptime T: type) type {
     return struct {
         val: T,
-        times: u32,
+        times: u8,
     };
 }
 
@@ -14,11 +14,11 @@ pub fn runLengthEncode(comptime T: type, msg: []const T, encode_to: *std.ArrayLi
         return;
     }
 
-    var count: u32 = 1;
+    var count: u8 = 1;
     var curr = msg[0];
 
     for (msg[1..]) |item| {
-        if (item != curr) {
+        if (item != curr or count == std.math.maxInt(u8)) {
             try encode_to.append(.{
                 .val = curr,
                 .times = count,
@@ -65,5 +65,21 @@ test "Crazier RLE" {
         .{ .val = 'b', .times = 3 },
         .{ .val = '0', .times = 3 },
         .{ .val = 'l', .times = 6 },
+    }, encode_to.items);
+}
+
+test "Max u8 size" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const alloc = gpa.allocator();
+    var encode_to = std.ArrayList(EncodePair(u8)).init(alloc);
+    defer encode_to.deinit();
+
+    try runLengthEncode(u8, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", &encode_to);
+
+    try std.testing.expectEqualSlices(EncodePair(u8), &[_]EncodePair(u8){
+        .{ .val = 'a', .times = 255 },
+        .{ .val = 'a', .times = 1 },
     }, encode_to.items);
 }
